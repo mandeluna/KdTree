@@ -44,6 +44,7 @@ public class PointSET {
 	// draw all points to standard draw 
 	public void draw() {
 		StdDraw.setPenColor();
+		StdDraw.setPenRadius(0.01);
 		for (Point2D p : points) {
 			StdDraw.filledCircle(p.x(), p.y(), 2);
 		}

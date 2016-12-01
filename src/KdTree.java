@@ -1,6 +1,4 @@
 import java.util.Iterator;
-import java.util.TreeSet;
-
 import edu.princeton.cs.algs4.Point2D;
 import edu.princeton.cs.algs4.RectHV;
 import edu.princeton.cs.algs4.StdDraw;
@@ -8,8 +6,7 @@ import edu.princeton.cs.algs4.StdDraw;
 
 public class KdTree {
 
-	private Node<Point2D, Point2D> root;
-	private int count = 0;
+	private Node root;
 
 	/* --- Public API (required for assignment) --- */
 
@@ -24,7 +21,17 @@ public class KdTree {
 
 	// number of points in the set 
 	public int size() {
-		return count;
+		return size(root);
+	}
+
+	// return the size of the subtree rooted at the node 
+	private int size(Node node) {
+		if (node == null) {
+			return 0;
+		}
+		else {
+			return 1 + size(node.lb) + size(node.rt) ;
+		}
 	}
 
 	// add the point to the set (if it is not already in the set)
@@ -32,7 +39,18 @@ public class KdTree {
 		if (p == null) {
 			throw new NullPointerException("insert(): p should not be null");
 		}
-		insert(root, p, p);
+		double xmin, ymin, xmax, ymax;
+		boolean isHorizontal = true;	// initial orientation is left-to-right
+//						// TODO correct all these assumptions
+//		xmin = 0.0;		// XXX leftmost point within smallest rectangle containing p
+//		xmax = p.x();	// XXX assuming p is the top-most left-to-right entry
+//		ymax = p.y();	// XXX this is the largest rectangle possible
+//		ymin = 0.0;		// XXX assuming the top boundary is 0
+//		insert(root, p, new RectHV(xmin, ymax, xmax, ymin), isHorizontal);
+		Node node = insert(root, p, null, isHorizontal);
+		if (root == null) {
+			root = node;
+		}
 	}
 
 	// does the set contain point p? 
@@ -45,9 +63,23 @@ public class KdTree {
 
 	// draw all points to standard draw 
 	public void draw() {
-		StdDraw.setPenColor();
-		for (Point2D p : points) {
-			StdDraw.filledCircle(p.x(), p.y(), 2);
+		Node node = root;
+		boolean isLeftRight = true;
+
+		while (node != null) {
+
+			if (isLeftRight) {
+				StdDraw.setPenColor(StdDraw.BOOK_RED);
+			}
+			else {
+				StdDraw.setPenColor(StdDraw.BOOK_LIGHT_BLUE);
+			}
+
+			// Draw Point
+			StdDraw.setPenColor(StdDraw.BLACK);
+			StdDraw.filledCircle(node.point.x(), node.point.y(), 2);
+
+			isLeftRight = !isLeftRight;
 		}
 	}
 
@@ -60,9 +92,20 @@ public class KdTree {
 
 			@Override
             public Iterator<Point2D> iterator() {
-	            return points.stream()
-	            		.filter(p -> rect.contains(p))
-	            		.iterator();
+	            return new Iterator<Point2D>() {
+
+					@Override
+                    public boolean hasNext() {
+	                    // TODO Auto-generated method stub
+	                    return false;
+                    }
+
+					@Override
+                    public Point2D next() {
+	                    // TODO Auto-generated method stub
+	                    return null;
+                    }
+	            };
             }
 		};
 	}
@@ -72,13 +115,31 @@ public class KdTree {
 		if (p == null) {
 			throw new NullPointerException("nearest(): p should not be null");
 		}
-		Point2D nearest = null;
+		Node x = nearestNodeTo(p);
+		if (x == null) {
+			return null;
+		}
+		else {
+			return x.point;
+		}
+	}
+
+	private Node nearestNodeTo(Point2D p) {
 		double min = Double.POSITIVE_INFINITY;
-		for (Point2D point : points) {
-			if (point.distanceSquaredTo(p) < min) {
-				nearest = point;
-				min = point.distanceSquaredTo(p);
+		Node nearest = null;
+		Node x = root;
+		boolean isLeftRight = true;
+		while (x != null) {
+			double dist = p.distanceSquaredTo(nearest.point);
+			if (dist < min) {
+				min = dist;
+				nearest = x;
+				x = x.lb;
 			}
+			else if (dist >= min) {
+				x = x.rt;
+			}
+			isLeftRight = !isLeftRight;
 		}
 		return nearest;
 	}
@@ -89,116 +150,116 @@ public class KdTree {
 
 	/* --- Private API (Red/Black BST implementation --- */
 
-	private class Node<Key extends Comparable<Key>, Value> {
-		Node<Key, Value> left;
-		Node<Key, Value> right;
-		Key key;
-		Value value;
+	private static class Node {
+		Point2D point;
+		RectHV rect;
+		Node lb;	// the left/bottom subtree
+		Node rt;	// the right/top subtree
 		boolean isRed;	// color of parent link
 
-		private Node(Key key, Value value, boolean isRed) {
-			this.key = key;
-			this.value = value;
+		private Node(Point2D key, RectHV value, boolean isRed) {
+			this.point = key;
+			this.rect = value;
 			this.isRed = isRed;
-		}
-
-		private boolean isRed(Node<Key, Value> x) {
-			if (x == null) {
-				return false;	// null links are black
-			}
-			return x.isRed;
-		}
-
-		// Left rotation. Orient a (temporarily) right-leaning link to lean left
-		private Node<Key, Value> rotateLeft(Node<Key, Value> h) {
-			assert (isRed(h.right));
-			Node<Key, Value> x = h.right;
-			h.right = x.left;
-			x.left = h;
-			x.isRed = h.isRed;
-			h.isRed = true;
-			return x;
-		}
-
-		// Right rotation. Orient a left-leaning link to (temporarily) lean right
-		private Node<Key, Value> rotateRight(Node<Key, Value> h) {
-			assert (isRed(h.left));
-			Node<Key, Value> x = h.left;
-			h.left = x.right;
-			x.right = h;
-			x.isRed = h.isRed;
-			h.isRed = true;
-			return x;
-		}
-
-		// Color flip. Recolor to split a (temporary) 4-node
-		private void flipColors(Node<Key, Value> h) {
-			assert !isRed(h);
-			assert isRed(h.left);
-			assert isRed(h.right);
-			h.isRed = true;
-			h.left.isRed = false;
-			h.right.isRed = false;
-		}
-
-		// retrieval
-		private Value get(Key key) {
-			Node<Key, Value> x = root;
-			while (x != null) {
-				int cmp = key.compareTo(x.key);
-				if (cmp < 0) {
-					x = x.left;
-				}
-				else if (cmp > 0) {
-					x = x.right;
-				}
-				else {
-					return x.value;
-				}
-			}
-			return null;
-		}
-
-		// Insertion.
-		private Node<Key, Value> insert(Node<Key, Value> h, Key key, Value value) {
-			if (h == null) {
-				return new Node<Key, Value>(key, value, true);
-			}
-			int cmp = key.compareTo(h.key);
-			if (cmp < 0) {
-				h.left = insert(h.left, key, value);
-			}
-			else if (cmp > 0) {
-				h.right = insert(h.right, key, value);
-			}
-			else {
-				h.value = value;
-			}
-			if (isRed(h.right) && !isRed(h.left)){
-				h = rotateLeft(h);
-			}
-			if (isRed(h.left) && isRed(h.left.left)) {
-				h = rotateRight(h);
-			}
-			if (isRed(h.left)&& isRed(h.right)) {
-				flipColors(h);
-			}
-			return h;
 		}
 	}
 
-	private Point2D lookup(Point2D key) {
-		Node<Point2D, Point2D> x = root;
+	private boolean isRed(Node x) {
+		if (x == null) {
+			return false;	// null links are black
+		}
+		return x.isRed;
+	}
+
+	// Left rotation. Orient a (temporarily) right-leaning link to lean left
+	private Node rotateLeft(Node h) {
+		assert (isRed(h.rt));
+		Node x = h.rt;
+		h.rt = x.lb;
+		x.lb = h;
+		x.isRed = h.isRed;
+		h.isRed = true;
+		return x;
+	}
+
+	// Right rotation. Orient a left-leaning link to (temporarily) lean right
+	private Node rotateRight(Node h) {
+		assert (isRed(h.lb));
+		Node x = h.lb;
+		h.lb = x.rt;
+		x.rt = h;
+		x.isRed = h.isRed;
+		h.isRed = true;
+		return x;
+	}
+
+	// Color flip. Recolor to split a (temporary) 4-node
+	private void flipColors(Node h) {
+		assert !isRed(h);
+		assert isRed(h.lb);
+		assert isRed(h.rt);
+		h.isRed = true;
+		h.lb.isRed = false;
+		h.rt.isRed = false;
+	}
+
+	// retrieval
+	private RectHV get(Point2D key) {
+		Node x = root;
 		while (x != null) {
-			int cmp = key.compareTo(x.key);
+			int cmp = key.compareTo(x.point);
 			if (cmp < 0) {
-				x = x.left;
+				x = x.lb;
 			}
 			else if (cmp > 0) {
-				x = x.right;
+				x = x.rt;
 			}
 			else {
-				return x.value;
+				return x.rect;
+			}
+		}
+		return null;
+	}
+
+	// Insertion.
+	private Node insert(Node h, Point2D key, RectHV value, boolean orientation) {
+		if (h == null) {
+			return new Node(key, value, true);
+		}
+		int cmp = key.compareTo(h.point);
+		if (cmp < 0) {
+			h.lb = insert(h.lb, key, value, !orientation);
+		}
+		else if (cmp > 0) {
+			h.rt = insert(h.rt, key, value, !orientation);
+		}
+		else {
+			h.rect = value;
+		}
+		if (isRed(h.rt) && !isRed(h.lb)){
+			h = rotateLeft(h);
+		}
+		if (isRed(h.lb) && isRed(h.lb.lb)) {
+			h = rotateRight(h);
+		}
+		if (isRed(h.lb) && isRed(h.rt)) {
+			flipColors(h);
+		}
+		return h;
+	}
+
+	private Node lookup(Point2D key) {
+		Node x = root;
+		while (x != null) {
+			int cmp = key.compareTo(x.point);
+			if (cmp < 0) {
+				x = x.lb;
+			}
+			else if (cmp > 0) {
+				x = x.rt;
+			}
+			else {
+				return x;
 			}
 		}
 		return null;
