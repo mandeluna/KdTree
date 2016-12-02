@@ -8,19 +8,62 @@ import edu.princeton.cs.algs4.Point2D;
 public class TestTreeCreation {
 
 	@Test
-	public void testAddPoints() {
+	public void testRotateRight() {
 		KdTree tree = new KdTree();
+		assertTrue(tree.size() == 0);
+
 		Point2D p = new Point2D(0.5, 0.5);
+		assertFalse(tree.contains(p));
 		tree.insert(p);
+		assertTrue(tree.size() == 1);
 		assertTrue(tree.contains(p));
+
 		Point2D q = new Point2D(0.25, 0.25);
+		// adding q to the left of p so q's parent link should be red
+		assertTrue(q.compareTo(p) < 0);
 		assertFalse(tree.contains(q));
 		tree.insert(q);
+		assertTrue(tree.size() == 2);
 		assertTrue(tree.contains(q));
 		assertTrue(tree.contains(p));
+
 		Point2D r = new Point2D(0.125, 0.125);
+		// adding r to the left of q so r's parent link should be red
+		assertTrue(r.compareTo(q) < 0);
 		assertFalse(tree.contains(r));
 		tree.insert(r);
+		assertTrue(tree.size() == 3);
+		assertTrue(tree.contains(r));
+		assertTrue(tree.contains(q));
+		assertTrue(tree.contains(p));
+	}
+
+	@Test
+	public void testRotateLeft() {
+		KdTree tree = new KdTree();
+		assertTrue(tree.size() == 0);
+
+		Point2D p = new Point2D(0.125, 0.125);
+		assertFalse(tree.contains(p));
+		tree.insert(p);
+		assertTrue(tree.size() == 1);
+		assertTrue(tree.contains(p));
+
+		Point2D q = new Point2D(0.25, 0.25);
+		// adding q to the right of p so q's parent link should be black
+		assertTrue(q.compareTo(p) > 0);
+		assertFalse(tree.contains(q));
+		tree.insert(q);
+		assertTrue(tree.size() == 2);
+		assertTrue(tree.contains(q));
+		assertTrue(tree.contains(p));
+
+		Point2D r = new Point2D(0.5, 0.5);
+		// adding r to the right of q so r's parent link should be black
+		assertTrue(r.compareTo(q) > 0);
+		assertFalse(tree.contains(r));
+		tree.insert(r);
+		assertTrue(tree.size() == 3);
 		assertTrue(tree.contains(r));
 		assertTrue(tree.contains(q));
 		assertTrue(tree.contains(p));

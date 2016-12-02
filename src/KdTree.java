@@ -39,17 +39,12 @@ public class KdTree {
 		if (p == null) {
 			throw new NullPointerException("insert(): p should not be null");
 		}
-		double xmin, ymin, xmax, ymax;
-		boolean isHorizontal = true;	// initial orientation is left-to-right
-//						// TODO correct all these assumptions
-//		xmin = 0.0;		// XXX leftmost point within smallest rectangle containing p
-//		xmax = p.x();	// XXX assuming p is the top-most left-to-right entry
-//		ymax = p.y();	// XXX this is the largest rectangle possible
-//		ymin = 0.0;		// XXX assuming the top boundary is 0
-//		insert(root, p, new RectHV(xmin, ymax, xmax, ymin), isHorizontal);
-		Node node = insert(root, p, null, isHorizontal);
-		if (root == null) {
-			root = node;
+		// if root is initially null we need to set that node to black
+		boolean special = root == null;
+		// initial orientation is left-right and box is entire unit square
+		root = insert(root, p, 0.0, 1.0, 0.0, 1.0, true);
+		if (special) {
+			root.isRed = false;
 		}
 	}
 
@@ -63,24 +58,30 @@ public class KdTree {
 
 	// draw all points to standard draw 
 	public void draw() {
-		Node node = root;
-		boolean isLeftRight = true;
+		drawNode(root, true);
+	}
 
-		while (node != null) {
-
-			if (isLeftRight) {
-				StdDraw.setPenColor(StdDraw.BOOK_RED);
-			}
-			else {
-				StdDraw.setPenColor(StdDraw.BOOK_LIGHT_BLUE);
-			}
-
-			// Draw Point
-			StdDraw.setPenColor(StdDraw.BLACK);
-			StdDraw.filledCircle(node.point.x(), node.point.y(), 2);
-
-			isLeftRight = !isLeftRight;
+	private void drawNode(Node node, boolean isLeftRight) {
+		if (node == null) {
+			return;
 		}
+
+		// Draw Point
+		StdDraw.setPenColor(StdDraw.BLACK);
+		StdDraw.filledCircle(node.point.x(), node.point.y(), 0.005);
+
+		// Draw separating line
+		if (isLeftRight) {
+			StdDraw.setPenColor(StdDraw.RED);
+			StdDraw.line(node.point.x(), node.ymin, node.point.x(), node.ymax);
+		}
+		else {
+			StdDraw.setPenColor(StdDraw.BLUE);
+			StdDraw.line(node.xmin, node.point.y(), node.xmax, node.point.y());
+		}
+
+		drawNode(node.lb, !isLeftRight);
+		drawNode(node.rt, !isLeftRight);
 	}
 
 	// all points that are inside the rectangle 
@@ -148,21 +149,29 @@ public class KdTree {
 	public static void main(String[] args) {
 	}
 
-	/* --- Private API (Red/Black BST implementation --- */
+	/* --- Private API (Red/Black BST 2d Tree) --- */
 
 	private static class Node {
 		Point2D point;
-		RectHV rect;
+		double xmin, xmax, ymin, ymax;
 		Node lb;	// the left/bottom subtree
 		Node rt;	// the right/top subtree
 		boolean isRed;	// color of parent link
 
-		private Node(Point2D key, RectHV value, boolean isRed) {
+		private Node(Point2D key, double xmin, double xmax, double ymin, double ymax, boolean isRed) {
 			this.point = key;
-			this.rect = value;
+			this.xmin = xmin;
+			this.xmax = xmax;
+			this.ymin = ymin;
+			this.ymax = ymax;
 			this.isRed = isRed;
 		}
-	}
+
+		@Override
+		public String toString() {
+			return String.format("%s [%.6f, %.6f, %.6f, %.6f]", point.toString(), xmin, xmax, ymin, ymax);
+		}
+}
 
 	private boolean isRed(Node x) {
 		if (x == null) {
@@ -215,26 +224,45 @@ public class KdTree {
 				x = x.rt;
 			}
 			else {
-				return x.rect;
+				return new RectHV(x.xmin, x.xmax, x.ymin, x.ymax);
 			}
 		}
 		return null;
 	}
 
 	// Insertion.
-	private Node insert(Node h, Point2D key, RectHV value, boolean orientation) {
+	private Node insert(Node h, Point2D point, double xmin, double xmax, double ymin, double ymax, boolean leftToRight) {
 		if (h == null) {
-			return new Node(key, value, true);
+			return new Node(point, xmin, xmax, ymin, ymax, true);
 		}
-		int cmp = key.compareTo(h.point);
+		int cmp = leftToRight ? Double.compare(point.x(), h.point.x()) : Double.compare(point.y(), h.point.y());
 		if (cmp < 0) {
-			h.lb = insert(h.lb, key, value, !orientation);
+			// inserting to the left of the current node
+			if (leftToRight) {
+				xmax = point.x();
+			}
+			// inserting below the current node
+			else {
+				ymax = point.y();
+			}
+			h.lb = insert(h.lb, point, xmin, xmax, ymin, ymax, !leftToRight);
 		}
 		else if (cmp > 0) {
-			h.rt = insert(h.rt, key, value, !orientation);
+			// inserting to the right of the current node
+			if (leftToRight) {
+				xmin = point.x();
+			}
+			// inserting above the current node
+			else {
+				ymin = point.y();
+			}
+			h.rt = insert(h.rt, point, xmin, xmax, ymin, ymax, !leftToRight);
 		}
 		else {
-			h.rect = value;
+			h.xmin = xmin;
+			h.xmax = xmax;
+			h.ymin = ymin;
+			h.ymax = ymax;
 		}
 		if (isRed(h.rt) && !isRed(h.lb)){
 			h = rotateLeft(h);
