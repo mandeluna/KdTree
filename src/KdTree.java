@@ -1,3 +1,4 @@
+import java.util.Arrays;
 import java.util.Iterator;
 import edu.princeton.cs.algs4.Point2D;
 import edu.princeton.cs.algs4.RectHV;
@@ -66,10 +67,7 @@ public class KdTree {
 			return;
 		}
 
-		// Draw Point
-		StdDraw.setPenColor(StdDraw.BLACK);
-		StdDraw.filledCircle(node.point.x(), node.point.y(), 0.005);
-
+        StdDraw.setPenRadius(0.001);
 		// Draw separating line
 		if (isLeftRight) {
 			StdDraw.setPenColor(StdDraw.RED);
@@ -80,7 +78,11 @@ public class KdTree {
 			StdDraw.line(node.xmin, node.point.y(), node.xmax, node.point.y());
 		}
 
-		drawNode(node.lb, !isLeftRight);
+        // Draw Point
+        StdDraw.setPenColor(StdDraw.BLACK);
+        StdDraw.filledCircle(node.point.x(), node.point.y(), 0.005);
+
+        drawNode(node.lb, !isLeftRight);
 		drawNode(node.rt, !isLeftRight);
 	}
 
@@ -145,8 +147,45 @@ public class KdTree {
 		return nearest;
 	}
 
+	private void printNodes() {
+		printNodes(root, 0);
+	}
+
+	private void printNodes(Node node, int indent) {
+        char[] chars = new char[indent];
+        Arrays.fill(chars, ' ');
+        System.out.print(new String(chars));
+
+		if (node == null) {
+			System.out.println(".");
+			return;
+		}
+		System.out.println(node);
+        System.out.print(new String(chars));
+        System.out.println("left/below: ");
+		printNodes(node.lb, indent + 1);
+        System.out.print(new String(chars));
+        System.out.println("right/above: ");
+        printNodes(node.rt, indent + 1);
+	}
+
 	// unit testing of the methods (optional) 
 	public static void main(String[] args) {
+		KdTree tree = new KdTree();
+		Point2D p0 = new Point2D(0.7, 0.2);
+		Point2D p1 = new Point2D(0.5, 0.4);
+		Point2D p2 = new Point2D(0.9, 0.6);
+		Point2D p3 = new Point2D(0.2, 0.3);
+		Point2D p4 = new Point2D(0.4, 0.7);
+		tree.insert(p0);
+		tree.insert(p1);
+        tree.insert(p2);
+        tree.insert(p3);
+        tree.insert(p4);
+		tree.printNodes();
+        StdDraw.enableDoubleBuffering();
+        tree.draw();
+        StdDraw.show();
 	}
 
 	/* --- Private API (Red/Black BST 2d Tree) --- */
@@ -171,7 +210,7 @@ public class KdTree {
 		public String toString() {
 			return String.format("%s [%.6f, %.6f, %.6f, %.6f]", point.toString(), xmin, xmax, ymin, ymax);
 		}
-}
+    }
 
 	private boolean isRed(Node x) {
 		if (x == null) {
@@ -239,22 +278,22 @@ public class KdTree {
 		if (cmp < 0) {
 			// inserting to the left of the current node
 			if (leftToRight) {
-				xmax = point.x();
+				xmax = h.point.x();
 			}
 			// inserting below the current node
 			else {
-				ymax = point.y();
+				ymax = h.point.y();
 			}
 			h.lb = insert(h.lb, point, xmin, xmax, ymin, ymax, !leftToRight);
 		}
 		else if (cmp > 0) {
 			// inserting to the right of the current node
 			if (leftToRight) {
-				xmin = point.x();
+				xmin = h.point.x();
 			}
 			// inserting above the current node
 			else {
-				ymin = point.y();
+				ymin = h.point.y();
 			}
 			h.rt = insert(h.rt, point, xmin, xmax, ymin, ymax, !leftToRight);
 		}
