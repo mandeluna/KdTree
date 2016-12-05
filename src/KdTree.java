@@ -129,7 +129,7 @@ public class KdTree {
 		return results;
 	}
 
-	private void findPointsInRange(Node node, RectHV rect, List results) {
+	private void findPointsInRange(Node node, RectHV rect, List<Point2D> results) {
 	    if (node == null) {
 	        return;
         }
@@ -211,9 +211,9 @@ public class KdTree {
 		Point2D p4 = new Point2D(0.4, 0.7);
         tree.insert(p0);
 		tree.insert(p1);
-        tree.insert(p4);
         tree.insert(p2);
         tree.insert(p3);
+        tree.insert(p4);
 		tree.printNodes();
         StdDraw.enableDoubleBuffering();
         tree.draw();
@@ -239,7 +239,7 @@ public class KdTree {
 		}
 
 		private RectHV getRect() {
-		    return new RectHV(xmin, xmax, ymin, ymax);
+		    return new RectHV(xmin, ymin, xmax, ymax);
         }
 
 		@Override
@@ -355,9 +355,13 @@ public class KdTree {
 			if (leftToRight) {
 			    xmin = h.xmin;
 				xmax = h.point.x();
+				ymin = h.ymin;
+				ymax = h.ymax;
 			}
 			// inserting below the current node
 			else {
+				xmin = h.xmin;
+				xmax = h.xmax;
 			    ymin = h.ymin;
 				ymax = h.point.y();
 			}
@@ -368,9 +372,13 @@ public class KdTree {
 			if (leftToRight) {
 				xmin = h.point.x();
 				xmax = h.xmax;
+				ymin = h.ymin;
+				ymax = h.ymax;
 			}
 			// inserting above the current node
 			else {
+				xmin = h.xmin;
+				xmax = h.xmax;
 				ymin = h.point.y();
 				ymax = h.ymax;
 			}
