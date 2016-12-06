@@ -1,8 +1,11 @@
 import static org.junit.Assert.*;
 
+import java.util.TreeSet;
+
 import org.junit.Test;
 
 import edu.princeton.cs.algs4.Point2D;
+import edu.princeton.cs.algs4.StdOut;
 import edu.princeton.cs.algs4.StdRandom;
 
 
@@ -10,13 +13,18 @@ public class TestTreeCreation {
 
 	@Test
 	public void testDuplicateInsert() {
-		KdTree tree = new KdTree();
-		assertTrue(tree.size() == 0);
-		for (double i=0; i < 1; i += 0.001) {
-			for (double j=0; j < 1; j += 0.001) {
-				Point2D p = new Point2D(i, j);
+		for (int range = 10; range <= 100000; range *= 10) {
+			StdOut.printf("%d random general points in a %d-by-%d grid\n", range, range, range);
+			KdTree tree = new KdTree();
+			assertTrue(tree.size() == 0);
+			TreeSet<Point2D> reference = new TreeSet<>();
+			for (int i=0; i < range; i++) {
+				double x = Math.floor(StdRandom.uniform() * range);
+				double y = Math.floor(StdRandom.uniform() * range);
+				Point2D p = new Point2D(x, y);
 				tree.insert(p);
-				assertTrue(tree.size() == i+1);
+				reference.add(p);
+				assertTrue(tree.size() == reference.size());
 			}
 		}
 	}
@@ -25,7 +33,7 @@ public class TestTreeCreation {
 	public void testRandomInsert() {
 		KdTree tree = new KdTree();
 		assertTrue(tree.size() == 0);
-		for (int i=0; i < 1000000; i++) {
+		for (int i=0; i < 100000; i++) {
 			Point2D p = new Point2D(StdRandom.uniform(), StdRandom.uniform());
 			tree.insert(p);
 			assertTrue(tree.size() == i+1);

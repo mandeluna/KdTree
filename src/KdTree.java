@@ -275,6 +275,7 @@ public class KdTree {
             return new Node(point, xmin, xmax, ymin, ymax, true);
         }
         int cmp = leftToRight ? Double.compare(point.x(), h.point.x()) : Double.compare(point.y(), h.point.y());
+        int cmp2 = leftToRight ? Double.compare(point.y(), h.point.y()) : Double.compare(point.x(), h.point.x());
         if (cmp < 0) {
             // inserting to the left of the current node
             if (leftToRight) {
@@ -292,7 +293,11 @@ public class KdTree {
             }
             h.lb = insert(h.lb, point, xmin, xmax, ymin, ymax, !leftToRight);
         }
-        else { // if (cmp > 0)
+        else { // if (cmp >= 0)
+            // ignore duplicates
+            if ((cmp == 0) && (cmp2 == 0)) {
+                return h;
+            }
             // inserting to the right of the current node
             if (leftToRight) {
                 xmin = h.point.x();
