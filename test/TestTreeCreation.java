@@ -3,9 +3,34 @@ import static org.junit.Assert.*;
 import org.junit.Test;
 
 import edu.princeton.cs.algs4.Point2D;
+import edu.princeton.cs.algs4.StdRandom;
 
 
 public class TestTreeCreation {
+
+	@Test
+	public void testDuplicateInsert() {
+		KdTree tree = new KdTree();
+		assertTrue(tree.size() == 0);
+		for (double i=0; i < 1; i += 0.001) {
+			for (double j=0; j < 1; j += 0.001) {
+				Point2D p = new Point2D(i, j);
+				tree.insert(p);
+				assertTrue(tree.size() == i+1);
+			}
+		}
+	}
+
+	@Test
+	public void testRandomInsert() {
+		KdTree tree = new KdTree();
+		assertTrue(tree.size() == 0);
+		for (int i=0; i < 1000000; i++) {
+			Point2D p = new Point2D(StdRandom.uniform(), StdRandom.uniform());
+			tree.insert(p);
+			assertTrue(tree.size() == i+1);
+		}
+	}
 
 	@Test
 	public void testRotateRight() {
