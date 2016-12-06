@@ -119,7 +119,13 @@ public class KdTree {
         drawSubtree(node.rt, x + 0.03, y - 0.05);
     }
 
-	// all points that are inside the rectangle 
+    /*
+     * Range search. To find all points contained in a given query rectangle, start at the root and
+     * recursively search for points in both subtrees using the following pruning rule:
+     * if the query rectangle does not intersect the rectangle corresponding to a node,
+     * there is no need to explore that node (or its subtrees).
+     * A subtree is searched only if it might contain a point contained in the query rectangle.
+     */
 	public Iterable<Point2D> range(RectHV rect) {
 		if (rect == null) {
 			throw new NullPointerException("range(): rect should not be null");
@@ -148,34 +154,46 @@ public class KdTree {
 		if (p == null) {
 			throw new NullPointerException("nearest(): p should not be null");
 		}
-		Node x = nearestNodeTo(p);
+
+		Node x = nearestNodeTo(p, root, Double.POSITIVE_INFINITY, isRootOrientationLeftToRight);
+
 		if (x == null) {
 			return null;
 		}
-		else {
-		    drawSubtree(x);
-			return x.point;
-		}
+		return x.point;
 	}
 
-	private Node nearestNodeTo(Point2D p) {
-		double min = Double.POSITIVE_INFINITY;
+	/*
+	 * Nearest neighbor search. To find a closest point to a given query point, start at the root
+	 * and recursively search in both subtrees using the following pruning rule:
+	 * if the closest point discovered so far is closer than the distance between the query point
+	 * and the rectangle corresponding to a node, there is no need to explore that node (or its subtrees).
+	 * That is, a node is searched only if it might contain a point that is closer than the best one found so far.
+	 * The effectiveness of the pruning rule depends on quickly finding a nearby point.
+	 * To do this, organize your recursive method so that when there are two possible subtrees to go down,
+	 * you always choose the subtree that is on the same side of the splitting line as the query point as the
+	 * first subtree to explore—the closest point found while exploring the first subtree may enable pruning of the
+	 * second subtree.
+	 */
+	private Node nearestNodeTo(Point2D p, Node x, double min, boolean isLeftRight) {
+		if (x == null) {
+            return null;
+        }
+        Node nearest = null;
+        double nearestDist = p.distanceSquaredTo(x.point);
+        if (nearestDist < min) {
+            min = nearestDist;
+            nearest = x;
+        }
+        double leftBottomDist =  (x.lb != null) ? x.lb.getRect().distanceSquaredTo(p) : Double.POSITIVE_INFINITY;
+        double rightTopDist = (x.rt != null) ? x.rt.getRect().distanceSquaredTo(p) : Double.POSITIVE_INFINITY;
 
-		Node x = root;
-        Node nearest = x;
-        boolean isLeftRight = true;
-		while (x != null) {
-			double dist = p.distanceSquaredTo(x.point);
-			if (dist < min) {
-				min = dist;
-				nearest = x;
-				x = x.lb;
-			}
-			else if (dist >= min) {
-				x = x.rt;
-			}
-			isLeftRight = !isLeftRight;
-		}
+        if (leftBottomDist < min) {
+            Node nearestLeftBottom = nearestNodeTo(p, x.lb, min, !isLeftRight);
+        }
+        else if (rightTopDist < min) {
+            Node nearestRightTop = nearestNodeTo(p, x.lb, min, !isLeftRight);
+        }
 		return nearest;
 	}
 
@@ -367,7 +385,7 @@ public class KdTree {
 			}
 			h.lb = insert(h.lb, point, xmin, xmax, ymin, ymax, !leftToRight);
 		}
-		else if (cmp > 0) {
+		else { // if (cmp > 0)
 			// inserting to the right of the current node
 			if (leftToRight) {
 				xmin = h.point.x();
@@ -383,12 +401,6 @@ public class KdTree {
 				ymax = h.ymax;
 			}
 			h.rt = insert(h.rt, point, xmin, xmax, ymin, ymax, !leftToRight);
-		}
-		else {
-			h.xmin = xmin;
-			h.xmax = xmax;
-			h.ymin = ymin;
-			h.ymax = ymax;
 		}
 
 		// TODO maintain balance of tree
