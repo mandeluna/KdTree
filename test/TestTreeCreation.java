@@ -11,6 +11,36 @@ import edu.princeton.cs.algs4.StdRandom;
 
 public class TestTreeCreation {
 
+//	Test 3a: Insert n non-degenerate points and call contains() with random query points
+//	  *  5000 random non-degenerate points in a 10000-by-10000 grid
+	@Test
+	public void testRandomContains() {
+		KdTree tree = new KdTree();
+		TreeSet<Point2D> reference = new TreeSet<>();
+		int range = 10000;
+		for (int i = 0; i < 10000; i++) {
+			double x = Math.floor(StdRandom.uniform() * range);
+			double y = Math.floor(StdRandom.uniform() * range);
+			Point2D p = new Point2D(x, y);
+			tree.insert(p);
+			reference.add(p);
+			if (!tree.contains(p)) {
+				System.out.println("Tree does not contain " + p);
+			}
+			assertTrue(tree.contains(p) == true);
+		}
+		assertTrue(tree.size() == reference.size());
+		for (int i = 0; i < 10000; i++) {
+			double x = Math.floor(StdRandom.uniform() * range);
+			double y = Math.floor(StdRandom.uniform() * range);
+			Point2D p = new Point2D(x, y);
+			if (tree.contains(p) && !reference.contains(p)) {
+				System.out.println("Tree contains " + p);
+			}
+			assertTrue(tree.contains(p) == reference.contains(p));
+		}
+	}
+
 	@Test
 	public void testDuplicateInsert() {
 		for (int range = 10; range <= 100000; range *= 10) {
@@ -39,67 +69,4 @@ public class TestTreeCreation {
 			assertTrue(tree.size() == i+1);
 		}
 	}
-
-	@Test
-	public void testRotateRight() {
-		KdTree tree = new KdTree();
-		assertTrue(tree.size() == 0);
-
-		Point2D p = new Point2D(0.5, 0.5);
-		assertFalse(tree.contains(p));
-		tree.insert(p);
-		assertTrue(tree.size() == 1);
-		assertTrue(tree.contains(p));
-
-		Point2D q = new Point2D(0.25, 0.25);
-		// adding q to the left of p so q's parent link should be red
-		assertTrue(q.compareTo(p) < 0);
-		assertFalse(tree.contains(q));
-		tree.insert(q);
-		assertTrue(tree.size() == 2);
-		assertTrue(tree.contains(q));
-		assertTrue(tree.contains(p));
-
-		Point2D r = new Point2D(0.125, 0.125);
-		// adding r to the left of q so r's parent link should be red
-		assertTrue(r.compareTo(q) < 0);
-		assertFalse(tree.contains(r));
-		tree.insert(r);
-		assertTrue(tree.size() == 3);
-		assertTrue(tree.contains(r));
-		assertTrue(tree.contains(q));
-		assertTrue(tree.contains(p));
-	}
-
-	@Test
-	public void testRotateLeft() {
-		KdTree tree = new KdTree();
-		assertTrue(tree.size() == 0);
-
-		Point2D p = new Point2D(0.125, 0.125);
-		assertFalse(tree.contains(p));
-		tree.insert(p);
-		assertTrue(tree.size() == 1);
-		assertTrue(tree.contains(p));
-
-		Point2D q = new Point2D(0.25, 0.25);
-		// adding q to the right of p so q's parent link should be black
-		assertTrue(q.compareTo(p) > 0);
-		assertFalse(tree.contains(q));
-		tree.insert(q);
-		assertTrue(tree.size() == 2);
-		assertTrue(tree.contains(q));
-		assertTrue(tree.contains(p));
-
-		Point2D r = new Point2D(0.5, 0.5);
-		// adding r to the right of q so r's parent link should be black
-		assertTrue(r.compareTo(q) > 0);
-		assertFalse(tree.contains(r));
-		tree.insert(r);
-		assertTrue(tree.size() == 3);
-		assertTrue(tree.contains(r));
-		assertTrue(tree.contains(q));
-		assertTrue(tree.contains(p));
-	}
-
 }

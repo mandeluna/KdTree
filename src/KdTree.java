@@ -47,7 +47,7 @@ public class KdTree {
         if (p == null) {
             throw new NullPointerException("contains(): p should not be null");
         }
-        return this.lookup(p) != null;
+        return this.lookup(p, true) != null;
     }
 
     // draw all points to standard draw 
@@ -317,19 +317,21 @@ public class KdTree {
         return h;
     }
 
-    private Node lookup(Point2D key) {
-        Node x = root;
-        while (x != null) {
-            int cmp = key.compareTo(x.point);
+    private Node lookup(Point2D point, boolean isLeftRight) {
+        Node node = root;
+        while (node != null) {
+            int cmp = isLeftRight ? Double.compare(point.x(), node.point.x()) : Double.compare(point.y(), node.point.y());
             if (cmp < 0) {
-                x = x.lb;
-            }
-            else if (cmp > 0) {
-                x = x.rt;
+                node = node.lb;
             }
             else {
-                return x;
+                int cmp2 = isLeftRight ? Double.compare(point.y(), node.point.y()) : Double.compare(point.x(), node.point.x());
+                if (cmp == 0 && cmp2 == 0) {
+                    return node;
+                }
+                node = node.rt;
             }
+            isLeftRight = !isLeftRight;
         }
         return null;
     }
