@@ -14,10 +14,6 @@ public class KdTree {
 
     /* --- Public API (required for assignment) --- */
 
-    // construct an empty set of points 
-    public KdTree() {
-    }
-
     // is the set empty? 
     public boolean isEmpty() {
         return root == null;
@@ -25,11 +21,6 @@ public class KdTree {
 
     // number of points in the set 
     public int size() {
-        return size(root);
-    }
-
-    // return the size of the subtree rooted at the node 
-    private int size(Node node) {
         return size;
     }
 
@@ -61,11 +52,6 @@ public class KdTree {
         }
 
         StdDraw.setPenRadius(0.001);
-
-        StdDraw.setPenColor(StdDraw.LIGHT_GRAY);
-        double hw = (node.xmax - node.xmin);
-        double hh = (node.ymax - node.ymin);
-        StdDraw.rectangle(node.xmin, node.ymin, hw, hh);
 
         // Draw separating line
         if (isLeftRight) {
